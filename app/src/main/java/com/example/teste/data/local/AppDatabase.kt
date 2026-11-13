@@ -111,15 +111,18 @@ class AppDatabase private constructor(context: Context) :
 
         // Tabela de Operadores (contas de acesso com senha em hash)
         criarTabelaOperadores(db)
-
-        // Inserir dados iniciais (Seed Data) na primeira criação do banco
-        seedInitialData(db)
     }
 
     override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
-        // Migrações incrementais: preservam cargas, agendamentos e histórico existentes.
+        // Migrações incrementais: preservam a estrutura do banco e limpa dados de exemplo.
         if (oldVersion < 2) {
             criarTabelaOperadores(db)
+        }
+        if (oldVersion < 3) {
+            db.execSQL("DELETE FROM ocorrencias")
+            db.execSQL("DELETE FROM agendamentos")
+            db.execSQL("DELETE FROM cargas")
+            db.execSQL("DELETE FROM notificacoes")
         }
     }
 
@@ -137,85 +140,6 @@ class AppDatabase private constructor(context: Context) :
             )
             """.trimIndent()
         )
-    }
-
-    /**
-     * Injeta dados de demonstração reais no banco de dados na primeira execução.
-     */
-    private fun seedInitialData(db: SQLiteDatabase) {
-        val now = nowTimestamp()
-
-        // Carga 1
-        val c1 = ContentValues().apply {
-            put("awb", "057-12345678")
-            put("cliente", "Transportes Alfa Ltda")
-            put("volumes", "12 volumes (Paletes)")
-            put("peso", "150.5 kg")
-            put("servico", "Expresso")
-            put("tipo_carga", "Normal")
-        }
-        val idC1 = db.insert("cargas", null, c1)
-
-        val a1 = ContentValues().apply {
-            put("carga_id", idC1)
-            put("data_agendada", "30/03/2026")
-            put("hora_agendada", "08:30")
-            put("tentativa_numero", 1)
-            put("status", "AGENDADO")
-            put("data_criacao", now)
-        }
-        db.insert("agendamentos", null, a1)
-
-        // Carga 2
-        val c2 = ContentValues().apply {
-            put("awb", "045-98765432")
-            put("cliente", "Global Logística S.A.")
-            put("volumes", "8 caixas lacradas")
-            put("peso", "85.0 kg")
-            put("servico", "Premium")
-            put("tipo_carga", "Perecível")
-        }
-        val idC2 = db.insert("cargas", null, c2)
-
-        val a2 = ContentValues().apply {
-            put("carga_id", idC2)
-            put("data_agendada", "31/03/2026")
-            put("hora_agendada", "11:15")
-            put("tentativa_numero", 1)
-            put("status", "AGENDADO")
-            put("data_criacao", now)
-        }
-        db.insert("agendamentos", null, a2)
-
-        // Carga 3
-        val c3 = ContentValues().apply {
-            put("awb", "078-24681012")
-            put("cliente", "Cargo Express Importações")
-            put("volumes", "25 volumes")
-            put("peso", "420.0 kg")
-            put("servico", "Standard")
-            put("tipo_carga", "DGR")
-        }
-        val idC3 = db.insert("cargas", null, c3)
-
-        val a3 = ContentValues().apply {
-            put("carga_id", idC3)
-            put("data_agendada", "01/04/2026")
-            put("hora_agendada", "14:40")
-            put("tentativa_numero", 1)
-            put("status", "AGENDADO")
-            put("data_criacao", now)
-        }
-        db.insert("agendamentos", null, a3)
-
-        // Notificação Inicial
-        val n1 = ContentValues().apply {
-            put("titulo", "Sistema Inicializado")
-            put("mensagem", "Agendamentos iniciais carregados com sucesso no banco de dados local.")
-            put("data_horario", now)
-            put("lida", 0)
-        }
-        db.insert("notificacoes", null, n1)
     }
 
     // ============================================================================
@@ -644,7 +568,7 @@ class AppDatabase private constructor(context: Context) :
 
     companion object {
         private const val DATABASE_NAME = "retira_de_carga.db"
-        private const val DATABASE_VERSION = 2
+        private const val DATABASE_VERSION = 3
 
         @Volatile
         private var INSTANCE: AppDatabase? = null

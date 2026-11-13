@@ -121,7 +121,7 @@ fun RetiraDeCargaAppMVVM() {
     LaunchedEffect(Unit) {
         viewModel.userEvent.collectLatest { mensagem ->
             Toast.makeText(context, mensagem, Toast.LENGTH_SHORT).show()
-            launch {
+            this@LaunchedEffect.launch {
                 snackbarHostState.currentSnackbarData?.dismiss()
                 snackbarHostState.showSnackbar(mensagem)
             }
